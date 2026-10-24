@@ -1,4 +1,3 @@
-
 #include "chip.h"
 
 #include <stdlib.h>
@@ -14,18 +13,20 @@ void load_rom(const char* filename, Chip8* chip) {
     exit(EXIT_FAILURE);
   }
 
-
-  // Allocate a buffer to hold 16 bytes of binary data
-  unsigned char buffer[16];
-  size_t bytesRead = fread(buffer, sizeof(unsigned char), 16, file);
-
-  // Print the bytes in hexadecimal format
-  printf("Read %zu bytes:\n", bytesRead);
-  for (size_t i = 0; i < bytesRead; i++) {
-    printf("%02X ", buffer[i]);
-  }
-  printf("\n");
+  uint16_t program_size = END_LOC - START_LOC;
+  size_t bytesRead = fread(&chip->memory[START_LOC], sizeof(unsigned char), program_size, file);
 
   fclose(file); // Close the file
 
 }
+
+
+void cycle(Chip8* chip) {
+  chip->opcode = (chip->memory[chip->program_counter] << 8u) |
+    chip->memory[chip->program_counter + 1];
+
+  printf("opcode: %d\n", chip->opcode);
+
+  chip->program_counter += 2;
+}
+

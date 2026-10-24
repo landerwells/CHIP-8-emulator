@@ -17,5 +17,3 @@ $(BINARY): $(OBJS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
-
-

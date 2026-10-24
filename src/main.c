@@ -24,6 +24,7 @@ static struct {
 static Chip8 chip;
 
 static void init(void) {
+  chip.program_counter = START_LOC;
 
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
@@ -41,15 +42,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-  for (int y = 0; y < FB_HEIGHT; y++) {
-    for (int x = 0; x < FB_WIDTH; x++) {
-      if (chip.pixels[y][x] == BLACK) {
-        chip.pixels[y][x] = WHITE;
-      } else {
-        chip.pixels[y][x] = BLACK;
-      }
-    }
-  }
+  cycle(&chip);
 
   // update framebuffer with plasma pixels outside a sokol-gfx pass
   sfb_update(state.fb, &(sfb_update_desc){.pixels = SG_RANGE(chip.pixels)});
