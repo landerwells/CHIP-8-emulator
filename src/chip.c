@@ -1,10 +1,11 @@
 #include "chip.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 void load_rom(const char* filename, Chip8* chip) {
   FILE *file = fopen(filename, "rb");
@@ -25,9 +26,55 @@ void load_rom(const char* filename, Chip8* chip) {
 
 }
 
-void op_00E0() {}
+// The next two are both keyboard instructions.
+void op_ExA1(Chip8* chip, uint16_t x) {
+}
 
-void op_00EE() {}
+void op_Ex9E(Chip8* chip, uint16_t x) {
+}
+
+void op_Fx07(Chip8* chip, uint16_t x) {
+  chip->registers[x] = chip->delay_timer;
+
+}
+
+// Another keyboard instruction.
+void op_Fx0A(Chip8* chip, uint16_t x) {
+
+}
+
+void op_Fx15(Chip8* chip, uint16_t x) {
+  chip->delay_timer = chip->registers[x];
+}
+
+void op_Fx18(Chip8* chip, uint16_t x) {
+  chip->sound_timer = chip->registers[x];
+}
+
+void op_Fx1E(Chip8* chip, uint16_t x) {
+  chip->index += chip->registers[x];
+}
+
+void op_Fx29(Chip8* chip, uint16_t x) {
+  // Not sure what needs to be done here, look at implementation
+
+}
+
+void op_Fx33(Chip8* chip, uint16_t x) {
+
+}
+void op_Fx55(Chip8* chip, uint16_t x) {}
+void op_Fx65(Chip8* chip, uint16_t x) {}
+
+void op_00E0(Chip8* chip) {
+  memset(chip->pixels, 0, sizeof(chip->pixels));
+}
+
+// Return: Need to rectify this and op_2nnn()
+void op_00EE(Chip8* chip) {
+  chip->stack_pointer--;
+  chip->program_counter = chip->stack[chip->stack_pointer];
+}
 
 void op_1nnn(Chip8* chip, uint16_t nnn) {
   chip->program_counter = nnn;
@@ -63,6 +110,50 @@ void op_6xkk(Chip8* chip, uint16_t x, uint16_t kk) {
 
 void op_7xkk(Chip8* chip, uint16_t x, uint16_t kk) {
   chip->registers[x] += kk;
+}
+
+
+void op_8xy0(Chip8* chip, uint16_t x, uint16_t y) {
+  chip->registers[x] = chip->registers[y];
+}
+
+void op_8xy1(Chip8* chip, uint16_t x, uint16_t y) {
+  chip->registers[x] |= chip->registers[y];
+}
+
+void op_8xy2(Chip8* chip, uint16_t x, uint16_t y) {
+  chip->registers[x] &= chip->registers[y];
+}
+
+void op_8xy3(Chip8* chip, uint16_t x, uint16_t y) {
+  chip->registers[x] ^= chip->registers[y];
+}
+
+void op_8xy4(Chip8* chip, uint16_t x, uint16_t y) {
+  uint16_t sum = chip->registers[x] + chip->registers[y];
+  chip->registers[0xF] = (sum > 0xFF);
+  chip->registers[x] = sum & 0xFF;
+}
+
+void op_8xy5(Chip8* chip, uint16_t x, uint16_t y) {
+  chip->registers[0xF] = (chip->registers[x] > chip->registers[y]);
+  chip->registers[x] -= chip->registers[y];
+}
+
+void op_8xy6(Chip8* chip, uint16_t x, uint16_t y) {
+  chip->registers[0xF] = (chip->registers[x] & 0x1);
+  chip->registers[x] >>= 1;
+}
+
+void op_8xy7(Chip8* chip, uint16_t x, uint16_t y) {
+
+  chip->registers[0xF] = (chip->registers[y] > chip->registers[x]);
+  chip->registers[x] = chip->registers[y] - chip->registers[x];
+}
+
+void op_8xyE(Chip8* chip, uint16_t x, uint16_t y) {
+  chip->registers[0xF] = (chip->registers[x] & 0x80) >> 7;
+  chip->registers[x] <<= 1;
 }
 
 void op_9xy0(Chip8* chip, uint16_t x, uint16_t y) {
@@ -124,12 +215,98 @@ void cycle(Chip8* chip) {
 
   switch (op) {
     case 0x8000:
+      switch (n) {
+        case 0x0:
+          op_8xy0(chip, x, y);
+          break;
+        case 0x1:
+          op_8xy1(chip, x, y);
+          break;
+        case 0x2:
+          op_8xy2(chip, x, y);
+          break;
+        case 0x3:
+          op_8xy3(chip, x, y);
+          break;
+        case 0x4:
+          op_8xy4(chip, x, y);
+          break;
+        case 0x5:
+          op_8xy5(chip, x, y);
+          break;
+        case 0x6:
+          op_8xy6(chip, x, y);
+          break;
+        case 0x7:
+          op_8xy7(chip, x, y);
+          break;
+        case 0xE:
+          op_8xyE(chip, x, y);
+          break;
+        default:
+          perror("Unknown opcode");
+          exit(EXIT_FAILURE);
+          break;
+      }
       break;
     case 0x0000:
+      switch (n) {
+        case 0x0:
+          op_00E0(chip);
+          break;
+        case 0xE:
+          op_00EE(chip);
+          break;
+      }
       break;
     case 0xE000:
+      switch (kk) {
+        case 0xA1:
+          op_ExA1(chip, x);
+          break;
+        case 0x9E:
+          op_Ex9E(chip, x);
+          break;
+        default:
+          perror("Unknown opcode");
+          exit(EXIT_FAILURE);
+          break;
+      }
       break;
     case 0xF000:
+      switch (kk) {
+        case 0xA1:
+          op_Fx07(chip, x);
+          break;
+        case 0x0A:
+          op_Fx0A(chip, x);
+          break;
+        case 0x15:
+          op_Fx15(chip, x);
+          break;
+        case 0x18:
+          op_Fx18(chip, x);
+          break;
+        case 0x1E:
+          op_Fx1E(chip, x);
+          break;
+        case 0x29:
+          op_Fx29(chip, x);
+          break;
+        case 0x33:
+          op_Fx33(chip, x);
+          break;
+        case 0x55:
+          op_Fx55(chip, x);
+          break;
+        case 0x65:
+          op_Fx65(chip, x);
+          break;
+        default:
+          perror("Unknown opcode");
+          exit(EXIT_FAILURE);
+          break;
+      }
       break;
     default:
       switch (op) {
