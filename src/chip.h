@@ -13,10 +13,11 @@ typedef struct {
   uint8_t sound_timer;
   uint16_t program_counter;
   uint8_t stack_pointer;
-  // The Chip8 allows for 16 levels of nested subroutines.
   uint16_t stack[16];
-  uint32_t pixels[FB_HEIGHT][FB_WIDTH];
+  uint32_t pixels[FB_HEIGHT * FB_WIDTH];
   uint16_t opcode;
+  // Register used to store memory addresses.
+  uint16_t index;
 } Chip8;
 
 void load_rom(char const* filename, Chip8* chip);
