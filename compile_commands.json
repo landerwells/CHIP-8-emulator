@@ -1,0 +1,16 @@
+[
+  {
+    "file": "src/main.c",
+    "arguments": [
+      "clang",
+      "-ObjC",
+      "-Ilib/",
+      "-c",
+      "src/main.c",
+      "-o",
+      "out/main.o"
+    ],
+    "directory": "/Users/landerwells/Developer/CHIP-8-emulator",
+    "output": "out/main.o"
+  }
+]
