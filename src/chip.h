@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #define FB_WIDTH (64)
 #define FB_HEIGHT (32)
@@ -21,6 +22,7 @@ typedef struct {
   uint16_t opcode;
   // Register used to store memory addresses.
   uint16_t index;
+  bool keypad[16];
 } Chip8;
 
 void load_rom(char const* filename, Chip8* chip);

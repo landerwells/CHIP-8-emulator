@@ -41,6 +41,120 @@ static void init(void) {
       });
 }
 
+static void event(const sapp_event* e) {
+  switch (e->type) {
+    case SAPP_EVENTTYPE_KEY_DOWN:
+      switch (e->key_code) {
+        case SAPP_KEYCODE_1:
+          chip.keypad[0] = 1;
+          break;
+        case SAPP_KEYCODE_2:
+          chip.keypad[1] = 1;
+          break;
+        case SAPP_KEYCODE_3:
+          chip.keypad[2] = 1;
+          break;
+        case SAPP_KEYCODE_4:
+          chip.keypad[3] = 1;
+          break;
+        case SAPP_KEYCODE_Q:
+          chip.keypad[4] = 1;
+          break;
+        case SAPP_KEYCODE_W:
+          chip.keypad[5] = 1;
+          break;
+        case SAPP_KEYCODE_E:
+          chip.keypad[6] = 1;
+          break;
+        case SAPP_KEYCODE_R:
+          chip.keypad[7] = 1;
+          break;
+        case SAPP_KEYCODE_A:
+          chip.keypad[8] = 1;
+          break;
+        case SAPP_KEYCODE_S:
+          chip.keypad[9] = 1;
+          break;
+        case SAPP_KEYCODE_D:
+          chip.keypad[10] = 1;
+          break;
+        case SAPP_KEYCODE_F:
+          chip.keypad[11] = 1;
+          break;
+        case SAPP_KEYCODE_Z:
+          chip.keypad[12] = 1;
+          break;
+        case SAPP_KEYCODE_X:
+          chip.keypad[13] = 1;
+          break;
+        case SAPP_KEYCODE_C:
+          chip.keypad[14] = 1;
+          break;
+        case SAPP_KEYCODE_V:
+          chip.keypad[15] = 1;
+          break;
+        default:
+          break;
+      }
+      break;
+    case SAPP_EVENTTYPE_KEY_UP:
+      switch (e->key_code) {
+        case SAPP_KEYCODE_1:
+          chip.keypad[0] = 0;
+          break;
+        case SAPP_KEYCODE_2:
+          chip.keypad[1] = 0;
+          break;
+        case SAPP_KEYCODE_3:
+          chip.keypad[2] = 0;
+          break;
+        case SAPP_KEYCODE_4:
+          chip.keypad[3] = 0;
+          break;
+        case SAPP_KEYCODE_Q:
+          chip.keypad[4] = 0;
+          break;
+        case SAPP_KEYCODE_W:
+          chip.keypad[5] = 0;
+          break;
+        case SAPP_KEYCODE_E:
+          chip.keypad[6] = 0;
+          break;
+        case SAPP_KEYCODE_R:
+          chip.keypad[7] = 0;
+          break;
+        case SAPP_KEYCODE_A:
+          chip.keypad[8] = 0;
+          break;
+        case SAPP_KEYCODE_S:
+          chip.keypad[9] = 0;
+          break;
+        case SAPP_KEYCODE_D:
+          chip.keypad[10] = 0;
+          break;
+        case SAPP_KEYCODE_F:
+          chip.keypad[11] = 0;
+          break;
+        case SAPP_KEYCODE_Z:
+          chip.keypad[12] = 0;
+          break;
+        case SAPP_KEYCODE_X:
+          chip.keypad[13] = 0;
+          break;
+        case SAPP_KEYCODE_C:
+          chip.keypad[14] = 0;
+          break;
+        case SAPP_KEYCODE_V:
+          chip.keypad[15] = 0;
+          break;
+        default:
+          break;
+      }
+    default:
+      break;
+  }
+}
+
 static void frame(void) {
   cycle(&chip);
 
@@ -82,6 +196,7 @@ sapp_desc sokol_main(int argc, char *argv[]) {
     .init_cb = init,
     .frame_cb = frame,
     .cleanup_cb = cleanup,
+    .event_cb = event,
     .width = 800,
     .height = 600,
     .window_title = "framebuffer-sapp.c",

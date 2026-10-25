@@ -60,10 +60,21 @@ void init_chip(Chip8* chip) {
 // The next two are both keyboard instructions.
 void op_ExA1(Chip8* chip, uint16_t x) {
   printf("op_ExA1\n");
+
+  if (!chip->keypad[chip->registers[x]])
+  {
+    chip->program_counter += 2;
+  }
+
 }
 
 void op_Ex9E(Chip8* chip, uint16_t x) {
   printf("op_Ex9E\n");
+
+  if (chip->keypad[chip->registers[x]])
+  {
+    chip->program_counter += 2;
+  }
 }
 
 void op_Fx07(Chip8* chip, uint16_t x) {
@@ -74,8 +85,76 @@ void op_Fx07(Chip8* chip, uint16_t x) {
 
 // Another keyboard instruction.
 void op_Fx0A(Chip8* chip, uint16_t x) {
-  printf("op_Fx0A\n");
+  printf("op_Fx0A Still needs to be implemented\n");
 
+  if (chip->keypad[0])
+  {
+    chip->registers[x] = 0;
+  }
+  else if (chip->keypad[1])
+  {
+    chip->registers[x] = 1;
+  }
+  else if (chip->keypad[2])
+  {
+    chip->registers[x] = 2;
+  }
+  else if (chip->keypad[3])
+  {
+    chip->registers[x] = 3;
+  }
+  else if (chip->keypad[4])
+  {
+    chip->registers[x] = 4;
+  }
+  else if (chip->keypad[5])
+  {
+    chip->registers[x] = 5;
+  }
+  else if (chip->keypad[6])
+  {
+    chip->registers[x] = 6;
+  }
+  else if (chip->keypad[7])
+  {
+    chip->registers[x] = 7;
+  }
+  else if (chip->keypad[8])
+  {
+    chip->registers[x] = 8;
+  }
+  else if (chip->keypad[9])
+  {
+    chip->registers[x] = 9;
+  }
+  else if (chip->keypad[10])
+  {
+    chip->registers[x] = 10;
+  }
+  else if (chip->keypad[11])
+  {
+    chip->registers[x] = 11;
+  }
+  else if (chip->keypad[12])
+  {
+    chip->registers[x] = 12;
+  }
+  else if (chip->keypad[13])
+  {
+    chip->registers[x] = 13;
+  }
+  else if (chip->keypad[14])
+  {
+    chip->registers[x] = 14;
+  }
+  else if (chip->keypad[15])
+  {
+    chip->registers[x] = 15;
+  }
+  else
+  {
+    chip->program_counter -= 2;
+  }
 }
 
 void op_Fx15(Chip8* chip, uint16_t x) {
@@ -95,7 +174,7 @@ void op_Fx1E(Chip8* chip, uint16_t x) {
 
 void op_Fx29(Chip8* chip, uint16_t x) {
   printf("op_Fx29\n");
-  // Not sure what needs to be done here, look at implementation
+  chip->index = FONTSET_START_ADDRESS + (5 * chip->registers[x]);
 
 }
 
@@ -113,7 +192,6 @@ void op_Fx33(Chip8* chip, uint16_t x) {
 }
 
 // Fx55: Stores registers V0 through Vx in memory starting at location I
-// I would love to be able to debug the program here
 void op_Fx55(Chip8* chip, uint16_t x) {
   printf("op_Fx55\n");
   for (uint8_t i = 0; i <= x; i++) {
@@ -260,11 +338,9 @@ void op_Bnnn(Chip8* chip, uint16_t nnn) {
 
 void op_Cxkk(Chip8* chip, uint16_t x, uint16_t kk) {
   printf("op_Cxkk\n");
-  // Not sure if this is adequate
   chip->registers[x] = rand() & kk;
 }
 
-// Dxyn: Draw the sprite at 
 void op_Dxyn(Chip8* chip, uint16_t x, uint16_t y, uint16_t n) {
   printf("op_Dxyn\n");
   chip->registers[0xF] = 0;
@@ -295,16 +371,9 @@ void op_Dxyn(Chip8* chip, uint16_t x, uint16_t y, uint16_t n) {
   }
 }
 
+// I think I can organize this a bit better, but otherwise I like the
+// way it splits things off.
 void cycle(Chip8* chip) {
-  /* chip->opcode = (chip->memory[chip->program_counter] << 8u) | */
-  /*   chip->memory[chip->program_counter + 1]; */
-  /* uint16_t op = chip->opcode & 0xF000; */
-  /* uint16_t x = chip->opcode & 0x0F00 >> 7; */
-  /* uint16_t y = chip->opcode & 0x00F0 >> 3; */
-  /* uint16_t n = chip->opcode & 0x000F; */
-  /* uint16_t kk = chip->opcode & 0x00FF; */
-  /* uint16_t nnn = chip->opcode & 0x0FFF; */
-
   uint16_t opcode = (chip->memory[chip->program_counter] << 8u) |
     chip->memory[chip->program_counter + 1];
   uint16_t op = opcode & 0xF000;
@@ -316,9 +385,6 @@ void cycle(Chip8* chip) {
 
   chip->program_counter += 2;
 
-  // I think we could just use the opcode itself, and not need to 
-  // worry about which category it ends up in? Wrong, since we need
-  // the opcode to match up exactly, and sometimes they will differ.
   switch (op) {
     case 0x8000:
       switch (n) {
@@ -459,5 +525,18 @@ void cycle(Chip8* chip) {
       }
       break;
   }
+
+  // Decrement the delay timer if it's been set
+  if (chip->delay_timer > 0)
+  {
+    --chip->delay_timer;
+  }
+
+  // Decrement the sound timer if it's been set
+  if (chip->sound_timer > 0)
+  {
+    --chip->sound_timer;
+  }
+
 }
 
