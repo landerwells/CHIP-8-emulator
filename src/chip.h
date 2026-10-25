@@ -6,6 +6,9 @@
 #define START_LOC 0x200
 #define   END_LOC 0xFFF
 
+// What is the difference between define and const?
+#define FONTSET_START_ADDRESS 0x50
+
 typedef struct {
   uint8_t registers[16];
   uint8_t memory[4096];
@@ -22,8 +25,6 @@ typedef struct {
 
 void load_rom(char const* filename, Chip8* chip);
 
-// Nothing in the Chip8 requires passing around memory?
-// This initializes the chip
-/* Chip8 init(); */
+void init_chip(Chip8* chip);
 
 void cycle(Chip8* chip);

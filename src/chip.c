@@ -21,170 +21,264 @@ void load_rom(const char* filename, Chip8* chip) {
     exit(EXIT_FAILURE);
   }
 
-
   fclose(file); // Close the file
 
 }
 
+void init_chip(Chip8* chip) {
+  chip->program_counter = START_LOC;
+
+  const unsigned int FONTSET_SIZE = 80;
+
+  uint8_t fontset[FONTSET_SIZE] =
+  {
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+  };
+
+  for (unsigned int i = 0; i < FONTSET_SIZE; i++) {
+    chip->memory[FONTSET_START_ADDRESS + i] = fontset[i];
+  }
+
+}
+
+
 // The next two are both keyboard instructions.
 void op_ExA1(Chip8* chip, uint16_t x) {
+  printf("op_ExA1\n");
 }
 
 void op_Ex9E(Chip8* chip, uint16_t x) {
+  printf("op_Ex9E\n");
 }
 
 void op_Fx07(Chip8* chip, uint16_t x) {
+  printf("op_Fx07");
   chip->registers[x] = chip->delay_timer;
 
 }
 
 // Another keyboard instruction.
 void op_Fx0A(Chip8* chip, uint16_t x) {
+  printf("op_Fx0A\n");
 
 }
 
 void op_Fx15(Chip8* chip, uint16_t x) {
+  printf("op_Fx15\n");
   chip->delay_timer = chip->registers[x];
 }
 
 void op_Fx18(Chip8* chip, uint16_t x) {
+  printf("op_Fx18\n");
   chip->sound_timer = chip->registers[x];
 }
 
 void op_Fx1E(Chip8* chip, uint16_t x) {
+  printf("op_Fx1E\n");
   chip->index += chip->registers[x];
 }
 
 void op_Fx29(Chip8* chip, uint16_t x) {
+  printf("op_Fx29\n");
   // Not sure what needs to be done here, look at implementation
 
 }
 
 void op_Fx33(Chip8* chip, uint16_t x) {
+  printf("op_Fx33\n");
+  uint8_t value = chip->registers[x];
 
+  chip->memory[chip->index + 2] = value % 10;
+  value /= 10;
+
+  chip->memory[chip->index + 1] = value % 10;
+  value /= 10;
+
+  chip->memory[chip->index] = value % 10;
 }
-void op_Fx55(Chip8* chip, uint16_t x) {}
-void op_Fx65(Chip8* chip, uint16_t x) {}
 
+// Fx55: Stores registers V0 through Vx in memory starting at location I
+// I would love to be able to debug the program here
+void op_Fx55(Chip8* chip, uint16_t x) {
+  printf("op_Fx55\n");
+  for (uint8_t i = 0; i <= x; i++) {
+    chip->memory[chip->index + i] = chip->registers[i];
+  }
+}
+
+void op_Fx65(Chip8* chip, uint16_t x) {
+  printf("op_Fx65\n");
+  for (uint8_t i = 0; i <= chip->registers[x]; i++) {
+    chip->registers[i] = chip->memory[chip->index + i];
+  }
+}
+
+// 00E0: Clear display
 void op_00E0(Chip8* chip) {
+  printf("op_00E0\n");
   memset(chip->pixels, 0, sizeof(chip->pixels));
 }
 
-// Return: Need to rectify this and op_2nnn()
+// 00EE: Return from a subroutine
 void op_00EE(Chip8* chip) {
-  chip->stack_pointer--;
+  printf("op_00EE\n");
   chip->program_counter = chip->stack[chip->stack_pointer];
+  chip->stack_pointer--;
 }
 
+// 1nnn: Jump to address nnn
 void op_1nnn(Chip8* chip, uint16_t nnn) {
+  printf("op_1nnn\n");
   chip->program_counter = nnn;
 }
 
+// 2nnn: Call subroutine at address
 void op_2nnn(Chip8* chip, uint16_t nnn) {
+  printf("op_2nnn\n");
+  // Seems after swapping these two lines we end up in an infinite loop?
   chip->stack_pointer += 1;
   chip->stack[chip->stack_pointer] = chip->program_counter;
+
   chip->program_counter = nnn;
 }
 
+// 3xkk: Skip next instruction if Fx == kk
 void op_3xkk(Chip8* chip, uint16_t x, uint16_t kk) {
+  printf("op_3xkk\n");
   if (chip->registers[x] == kk) {
     chip->program_counter += 2;
   }
 }
 
 void op_4xkk(Chip8* chip, uint16_t x, uint16_t kk) {
+  printf("op_4xkk\n");
   if (chip->registers[x] != kk) {
     chip->program_counter += 2;
   }
 }
 
 void op_5xy0(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_5xy0\n");
   if (chip->registers[x] == chip->registers[y]) {
     chip->program_counter += 2;
   }
 }
 
 void op_6xkk(Chip8* chip, uint16_t x, uint16_t kk) {
+  printf("op_6xkk\n");
   chip->registers[x] = kk;
 }
 
 void op_7xkk(Chip8* chip, uint16_t x, uint16_t kk) {
+  printf("op_7xkk\n");
   chip->registers[x] += kk;
 }
 
 
 void op_8xy0(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_8xy0\n");
   chip->registers[x] = chip->registers[y];
 }
 
 void op_8xy1(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_8xy1\n");
   chip->registers[x] |= chip->registers[y];
 }
 
 void op_8xy2(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_8xy2\n");
   chip->registers[x] &= chip->registers[y];
 }
 
 void op_8xy3(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_8xy3\n");
   chip->registers[x] ^= chip->registers[y];
 }
 
 void op_8xy4(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_8xy4\n");
   uint16_t sum = chip->registers[x] + chip->registers[y];
   chip->registers[0xF] = (sum > 0xFF);
   chip->registers[x] = sum & 0xFF;
 }
 
 void op_8xy5(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_8xy5\n");
   chip->registers[0xF] = (chip->registers[x] > chip->registers[y]);
   chip->registers[x] -= chip->registers[y];
 }
 
 void op_8xy6(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_8xy6\n");
   chip->registers[0xF] = (chip->registers[x] & 0x1);
   chip->registers[x] >>= 1;
 }
 
 void op_8xy7(Chip8* chip, uint16_t x, uint16_t y) {
-
+  printf("op_8xy7\n");
   chip->registers[0xF] = (chip->registers[y] > chip->registers[x]);
   chip->registers[x] = chip->registers[y] - chip->registers[x];
 }
 
 void op_8xyE(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_8xyE\n");
   chip->registers[0xF] = (chip->registers[x] & 0x80) >> 7;
   chip->registers[x] <<= 1;
 }
 
 void op_9xy0(Chip8* chip, uint16_t x, uint16_t y) {
+  printf("op_9xy0\n");
   if (chip->registers[x] != chip->registers[y]) {
     chip->program_counter += 2;
   }
 }
 
 void op_Annn(Chip8* chip, uint16_t nnn) {
+  printf("op_Annn\n");
   chip->index = nnn;
 }
 
 void op_Bnnn(Chip8* chip, uint16_t nnn) {
+  printf("op_Bnnn\n");
   chip->program_counter += nnn + chip->registers[0];
 }
 
 void op_Cxkk(Chip8* chip, uint16_t x, uint16_t kk) {
+  printf("op_Cxkk\n");
   // Not sure if this is adequate
   chip->registers[x] = rand() & kk;
 }
 
+// Dxyn: Draw the sprite at 
 void op_Dxyn(Chip8* chip, uint16_t x, uint16_t y, uint16_t n) {
+  printf("op_Dxyn\n");
   chip->registers[0xF] = 0;
 
   uint8_t x_pos = chip->registers[x] % 64;
   uint8_t y_pos = chip->registers[y] % 32;
 
   for (unsigned int row = 0; row < n; ++row) {
+    if (y_pos + row >= 32) return;
     uint8_t sprite_byte = chip->memory[chip->index + row];
 
     for (unsigned int col = 0; col < 8; ++col) {
+      if (x_pos + col >= 64) return;
+
       uint8_t sprite_pixel = sprite_byte & (0x80u >> col);
       uint32_t* screen_pixel = &chip->pixels[(y_pos + row) * 64 + (x_pos + col)];
 
@@ -194,25 +288,37 @@ void op_Dxyn(Chip8* chip, uint16_t x, uint16_t y, uint16_t n) {
         }
 
         *screen_pixel ^= 0xFFFFFFFF;
+
       }
+
     }
   }
 }
 
 void cycle(Chip8* chip) {
-  chip->opcode = (chip->memory[chip->program_counter] << 8u) |
-    chip->memory[chip->program_counter + 1];
+  /* chip->opcode = (chip->memory[chip->program_counter] << 8u) | */
+  /*   chip->memory[chip->program_counter + 1]; */
+  /* uint16_t op = chip->opcode & 0xF000; */
+  /* uint16_t x = chip->opcode & 0x0F00 >> 7; */
+  /* uint16_t y = chip->opcode & 0x00F0 >> 3; */
+  /* uint16_t n = chip->opcode & 0x000F; */
+  /* uint16_t kk = chip->opcode & 0x00FF; */
+  /* uint16_t nnn = chip->opcode & 0x0FFF; */
 
-  // Is there a real reason the chip has to know the opcode?
-  uint16_t op = chip->opcode & 0xF000;
-  uint16_t x = chip->opcode & 0x0F00;
-  uint16_t y = chip->opcode & 0x00F0;
-  uint16_t n = chip->opcode & 0x000F;
-  uint16_t kk = chip->opcode & 0x00FF;
-  uint16_t nnn = chip->opcode & 0x0FFF;
+  uint16_t opcode = (chip->memory[chip->program_counter] << 8u) |
+    chip->memory[chip->program_counter + 1];
+  uint16_t op = opcode & 0xF000;
+  uint16_t x = (opcode & 0x0F00) >> 8;
+  uint16_t y = (opcode & 0x00F0) >> 4;
+  uint16_t n = opcode & 0x000F;
+  uint16_t kk = opcode & 0x00FF;
+  uint16_t nnn = opcode & 0x0FFF;
 
   chip->program_counter += 2;
 
+  // I think we could just use the opcode itself, and not need to 
+  // worry about which category it ends up in? Wrong, since we need
+  // the opcode to match up exactly, and sometimes they will differ.
   switch (op) {
     case 0x8000:
       switch (n) {
@@ -244,7 +350,7 @@ void cycle(Chip8* chip) {
           op_8xyE(chip, x, y);
           break;
         default:
-          perror("Unknown opcode");
+          printf("Unknown opcode: %X", chip->opcode);
           exit(EXIT_FAILURE);
           break;
       }
@@ -268,7 +374,7 @@ void cycle(Chip8* chip) {
           op_Ex9E(chip, x);
           break;
         default:
-          perror("Unknown opcode");
+          printf("Unknown opcode: %X", chip->opcode);
           exit(EXIT_FAILURE);
           break;
       }
@@ -303,7 +409,7 @@ void cycle(Chip8* chip) {
           op_Fx65(chip, x);
           break;
         default:
-          perror("Unknown opcode");
+          printf("Unknown opcode: %X", chip->opcode);
           exit(EXIT_FAILURE);
           break;
       }
@@ -347,12 +453,11 @@ void cycle(Chip8* chip) {
           op_Dxyn(chip, x, y, n);
           break;
         default:
-          perror("Unknown opcode");
+          printf("Unknown opcode: %X", chip->opcode);
           exit(EXIT_FAILURE);
           break;
       }
       break;
   }
-
 }
 

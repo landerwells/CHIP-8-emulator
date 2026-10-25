@@ -24,7 +24,7 @@ static struct {
 static Chip8 chip;
 
 static void init(void) {
-  chip.program_counter = START_LOC;
+  init_chip(&chip);
 
   sg_setup(&(sg_desc){
       .environment = sglue_environment(),
@@ -53,6 +53,9 @@ static void frame(void) {
       .swapchain = sglue_swapchain(),
       });
   sfb_render(state.fb);
+  sfb_render_ex(state.fb, &(sfb_render_desc){
+      .use_nearest_filter = true,
+      });
   sg_end_pass();
   sg_commit();
 }
@@ -71,8 +74,6 @@ sapp_desc sokol_main(int argc, char *argv[]) {
     printf("Try passing a filename and nothing else");
     exit(EXIT_FAILURE);
   }
-
-  printf("%s\n", argv[1]);
 
   load_rom(argv[1], &chip);
   // Here we are going to read in the ROM into the chips memory.
