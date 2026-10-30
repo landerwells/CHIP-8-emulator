@@ -46,16 +46,16 @@ static void event(const sapp_event* e) {
     case SAPP_EVENTTYPE_KEY_DOWN:
       switch (e->key_code) {
         case SAPP_KEYCODE_1:
-          chip.keypad[0] = 1;
-          break;
-        case SAPP_KEYCODE_2:
           chip.keypad[1] = 1;
           break;
-        case SAPP_KEYCODE_3:
+        case SAPP_KEYCODE_2:
           chip.keypad[2] = 1;
           break;
-        case SAPP_KEYCODE_4:
+        case SAPP_KEYCODE_3:
           chip.keypad[3] = 1;
+          break;
+        case SAPP_KEYCODE_4:
+          chip.keypad[0xC] = 1;
           break;
         case SAPP_KEYCODE_Q:
           chip.keypad[4] = 1;
@@ -67,31 +67,31 @@ static void event(const sapp_event* e) {
           chip.keypad[6] = 1;
           break;
         case SAPP_KEYCODE_R:
-          chip.keypad[7] = 1;
+          chip.keypad[0xD] = 1;
           break;
         case SAPP_KEYCODE_A:
-          chip.keypad[8] = 1;
+          chip.keypad[7] = 1;
           break;
         case SAPP_KEYCODE_S:
-          chip.keypad[9] = 1;
+          chip.keypad[8] = 1;
           break;
         case SAPP_KEYCODE_D:
-          chip.keypad[10] = 1;
+          chip.keypad[9] = 1;
           break;
         case SAPP_KEYCODE_F:
-          chip.keypad[11] = 1;
+          chip.keypad[0xE] = 1;
           break;
         case SAPP_KEYCODE_Z:
-          chip.keypad[12] = 1;
+          chip.keypad[0xA] = 1;
           break;
         case SAPP_KEYCODE_X:
-          chip.keypad[13] = 1;
+          chip.keypad[0] = 1;
           break;
         case SAPP_KEYCODE_C:
-          chip.keypad[14] = 1;
+          chip.keypad[0xB] = 1;
           break;
         case SAPP_KEYCODE_V:
-          chip.keypad[15] = 1;
+          chip.keypad[0xF] = 1;
           break;
         default:
           break;
@@ -100,16 +100,16 @@ static void event(const sapp_event* e) {
     case SAPP_EVENTTYPE_KEY_UP:
       switch (e->key_code) {
         case SAPP_KEYCODE_1:
-          chip.keypad[0] = 0;
-          break;
-        case SAPP_KEYCODE_2:
           chip.keypad[1] = 0;
           break;
-        case SAPP_KEYCODE_3:
+        case SAPP_KEYCODE_2:
           chip.keypad[2] = 0;
           break;
-        case SAPP_KEYCODE_4:
+        case SAPP_KEYCODE_3:
           chip.keypad[3] = 0;
+          break;
+        case SAPP_KEYCODE_4:
+          chip.keypad[0xC] = 0;
           break;
         case SAPP_KEYCODE_Q:
           chip.keypad[4] = 0;
@@ -121,31 +121,31 @@ static void event(const sapp_event* e) {
           chip.keypad[6] = 0;
           break;
         case SAPP_KEYCODE_R:
-          chip.keypad[7] = 0;
+          chip.keypad[0xD] = 0;
           break;
         case SAPP_KEYCODE_A:
-          chip.keypad[8] = 0;
+          chip.keypad[7] = 0;
           break;
         case SAPP_KEYCODE_S:
-          chip.keypad[9] = 0;
+          chip.keypad[8] = 0;
           break;
         case SAPP_KEYCODE_D:
-          chip.keypad[10] = 0;
+          chip.keypad[9] = 0;
           break;
         case SAPP_KEYCODE_F:
-          chip.keypad[11] = 0;
+          chip.keypad[0xE] = 0;
           break;
         case SAPP_KEYCODE_Z:
-          chip.keypad[12] = 0;
+          chip.keypad[0xA] = 0;
           break;
         case SAPP_KEYCODE_X:
-          chip.keypad[13] = 0;
+          chip.keypad[0] = 0;
           break;
         case SAPP_KEYCODE_C:
-          chip.keypad[14] = 0;
+          chip.keypad[0xB] = 0;
           break;
         case SAPP_KEYCODE_V:
-          chip.keypad[15] = 0;
+          chip.keypad[0xF] = 0;
           break;
         default:
           break;
@@ -155,8 +155,28 @@ static void event(const sapp_event* e) {
   }
 }
 
+static float accumulator = 0.0;
+static const float delta_time = 1.0 / 60.0;
+
+// More thought needs to be put into how many cycles per frame we are getting.,
+//
+// I would like to implement some of the improvements that are in 
+// Austin Morlan's article, then I would like to wrap this up. I think
+// I could get this working on my website? I would rather just put this into
+// a writeup and then point to it.
+#define CYCLES_PER_FRAME 60
+
 static void frame(void) {
-  cycle(&chip);
+
+  accumulator += sapp_frame_duration();
+
+  while (accumulator >= delta_time) {
+    accumulator -= delta_time;
+
+    for (int i = 0; i < CYCLES_PER_FRAME; i++) {
+      cycle(&chip);
+    }
+  }
 
   // update framebuffer with plasma pixels outside a sokol-gfx pass
   sfb_update(state.fb, &(sfb_update_desc){.pixels = SG_RANGE(chip.pixels)});
@@ -180,25 +200,20 @@ static void cleanup(void) {
 }
 
 sapp_desc sokol_main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-
-  // Process the command line arguments
   if (argc != 2) {
     printf("Try passing a filename and nothing else");
     exit(EXIT_FAILURE);
   }
 
   load_rom(argv[1], &chip);
-  // Here we are going to read in the ROM into the chips memory.
 
   return (sapp_desc){
     .init_cb = init,
     .frame_cb = frame,
     .cleanup_cb = cleanup,
     .event_cb = event,
-    .width = 800,
-    .height = 600,
+    .width = 1000,
+    .height = 400,
     .window_title = "framebuffer-sapp.c",
     .icon.sokol_default = true,
     .logger.func = slog_func,

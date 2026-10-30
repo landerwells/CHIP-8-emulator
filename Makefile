@@ -7,10 +7,16 @@ LIBRARY=lib
 SRCS      := $(wildcard $(SOURCE)/*.c)
 OBJS      := $(SRCS:.c=.o)
 
-OPT=-O0
+OPT=-O3
 DEPFLAGS=-MP -MD
-CFLAGS=-Wall -Wextra -Wformat=2 -g -I./$(LIBRARY) $(OPT) $(DEPFLAGS) -ObjC
-LDFLAGS = -framework QuartzCore -framework Cocoa -framework MetalKit -framework Metal -framework AudioToolbox
+CFLAGS= -std=c99 -g -O3 \
+				-Wall -Wextra -Wpedantic \
+				-Wformat=2 -Wstrict-prototypes -Wmissing-prototypes \
+				-fsanitize=address,undefined -fno-omit-frame-pointer \
+				-I./$(LIBRARY) $(OPT) $(DEPFLAGS) -ObjC
+
+LDFLAGS = -fsanitize=address,undefined \
+					-framework QuartzCore -framework Cocoa -framework MetalKit -framework Metal -framework AudioToolbox
 
 $(BINARY): $(OBJS)
 	$(CC) $(LDFLAGS) $^ -o $@
