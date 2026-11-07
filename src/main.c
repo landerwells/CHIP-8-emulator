@@ -9,19 +9,34 @@
 #include "sokol_log.h"
 
 #include "sokol_framebuffer.h"
+#include "sokol_audio.h"
 
 #include <stdint.h>
 #include <stdio.h>
 
-#define BLACK 0x000000
-#define WHITE 0xFFFFFF
-
 static struct {
   sfb_framebuffer fb;
-  float time;
 } state;
 
 static Chip8 chip;
+
+// I know this function is bad.
+static void stream(float* buffer, int num_frames, int num_channels) {
+  uint32_t even_odd = 0;
+  if (chip.sound_timer > 0) {
+    for (int i = 0; i < num_frames; i++) {
+      if (even_odd++ & (1<<5)) {
+        buffer[i] = 0.05f;
+      } else {
+        buffer[i] = -0.05f;
+      }
+    }
+  } else {
+    for (int i = 0; i < num_frames; i++) {
+      buffer[i] = 0.0f;
+    }
+  }
+}
 
 static void init(void) {
   init_chip(&chip);
@@ -34,6 +49,13 @@ static void init(void) {
   sfb_setup(&(sfb_desc){
       .logger.func = slog_func,
       });
+
+  saudio_setup(&(saudio_desc){
+      .stream_cb = stream,
+      .logger.func = slog_func,
+      });
+
+  saudio_isvalid();
 
   state.fb = sfb_make_framebuffer(&(sfb_framebuffer_desc){
       .width = FB_WIDTH,
@@ -155,6 +177,7 @@ static void event(const sapp_event *e) {
   }
 }
 
+
 const double fixed_delta_time = 1.0 / 60.0;
 double ticks = 0.0;
 double previous_ticks = 0.0;
@@ -162,7 +185,6 @@ const double hertz = 1.0 / 500.0;
 
 static void frame(void) {
   ticks += sapp_frame_duration();
-
   if (ticks -  previous_ticks >= fixed_delta_time) {
     update_timers(&chip);
     previous_ticks = ticks;
@@ -190,6 +212,7 @@ static void frame(void) {
 
 static void cleanup(void) {
   sfb_shutdown();
+  saudio_shutdown();
   sg_shutdown();
 }
 

@@ -22,7 +22,6 @@ void load_rom(const char* filename, Chip8* chip) {
   }
 
   fclose(file);
-
 }
 
 void init_chip(Chip8* chip) {
@@ -49,7 +48,7 @@ void init_chip(Chip8* chip) {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
   };
 
-  for (unsigned int i = 0; i < FONTSET_SIZE; i++) {
+  for (uint8_t i = 0; i < FONTSET_SIZE; i++) {
     chip->memory[FONTSET_START_ADDRESS + i] = fontset[i];
   }
 
@@ -72,7 +71,6 @@ static void op_Ex9E(Chip8* chip, uint16_t x) {
 
 static void op_Fx07(Chip8* chip, uint16_t x) {
   chip->registers[x] = chip->delay_timer;
-
 }
 
 static void op_Fx0A(Chip8* chip, uint16_t x) {
@@ -88,7 +86,6 @@ static void op_Fx0A(Chip8* chip, uint16_t x) {
     }
   }
   
-  // If waiting has not been set
   if (chip->waiting == -1) 
   {
     chip->program_counter -= 2;
@@ -96,6 +93,7 @@ static void op_Fx0A(Chip8* chip, uint16_t x) {
 }
 
 static void op_Fx15(Chip8* chip, uint16_t x) {
+  printf("Fx15\n");
   chip->sound_timer = chip->registers[x];
 }
 
@@ -186,7 +184,6 @@ static void op_6xkk(Chip8* chip, uint16_t x, uint16_t kk) {
   chip->registers[x] = kk;
 }
 
-// I see that this instruction gets called a lot?
 static void op_7xkk(Chip8* chip, uint16_t x, uint16_t kk) {
   chip->registers[x] += kk;
 }
@@ -231,7 +228,6 @@ static void op_8xy6(Chip8* chip, uint16_t x, uint16_t y) {
   chip->registers[0xF] = temp;
 }
 
-// vF was not correct on the non-carry condition
 static void op_8xy7(Chip8* chip, uint16_t x, uint16_t y) {
   uint16_t difference = chip->registers[y] - chip->registers[x];
   chip->registers[x] = difference & 0xFF;
@@ -259,6 +255,7 @@ static void op_Bnnn(Chip8* chip, uint16_t nnn) {
   chip->program_counter = nnn + chip->registers[0];
 }
 
+// Quirk
 /* static void op_Bxkk(Chip8* chip, uint16_t x, uint16_t nnn) { */
 /*   chip->program_counter += nnn + chip->registers[x]; */
 /* } */
@@ -273,11 +270,11 @@ static void op_Dxyn(Chip8* chip, uint16_t x, uint16_t y, uint16_t n) {
   uint8_t x_pos = chip->registers[x] % 64;
   uint8_t y_pos = chip->registers[y] % 32;
 
-  for (unsigned int row = 0; row < n; ++row) {
+  for (uint8_t row = 0; row < n; ++row) {
     if (y_pos + row >= 32) break;
     uint8_t sprite_byte = chip->memory[chip->index + row];
 
-    for (unsigned int col = 0; col < 8; ++col) {
+    for (uint8_t col = 0; col < 8; ++col) {
       if (x_pos + col >= 64) break;
 
       uint8_t sprite_pixel = sprite_byte & (0x80u >> col);
@@ -289,9 +286,7 @@ static void op_Dxyn(Chip8* chip, uint16_t x, uint16_t y, uint16_t n) {
         }
 
         *screen_pixel ^= 0xFFFFFFFF;
-
       }
-
     }
   }
 }
@@ -449,7 +444,6 @@ void cycle(Chip8* chip) {
       }
       break;
   }
-
 }
 
 void update_timers(Chip8* chip) {
