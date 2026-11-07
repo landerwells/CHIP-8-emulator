@@ -1,13 +1,11 @@
 # CHIP-8-emulator
-
-A modern, hand-written CHIP-8 emulator written in C. (And yes I know the CHIP-8
-is an interpreter.)
+A modern, hand-written CHIP-8 emulator written in C. (And yes, I know the
+CHIP-8 is an interpreter.)
 
 I used [Sokol](https://github.com/floooh/sokol), a C header library for the
 window, and input detection.
 
 ## Usage
-
 Currently MacOS only.
 
 Ensure you have `make` installed. The binary only takes two command line
@@ -18,6 +16,9 @@ hertz for the virtual machine to run at.
 make
 ./chip ROM frequency
 ```
+## Images from Timendus' Test Suite
+
+[](assets/1-chip-8-logo.png)
 
 ## References
 

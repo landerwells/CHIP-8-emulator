@@ -2,3 +2,4 @@ chip
 *.o
 *.d
 chip.dSYM/
+.DS_Store
