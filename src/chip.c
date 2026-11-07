@@ -27,6 +27,7 @@ void load_rom(const char* filename, Chip8* chip) {
 
 void init_chip(Chip8* chip) {
   chip->program_counter = START_LOC;
+  chip->waiting = -1;
 
   uint8_t fontset[FONTSET_SIZE] =
   {
@@ -74,73 +75,21 @@ static void op_Fx07(Chip8* chip, uint16_t x) {
 
 }
 
-// Basically, this instruction needs to wait until a key is released??
 static void op_Fx0A(Chip8* chip, uint16_t x) {
-  if (chip->keypad[0])
-  {
-    chip->registers[x] = 0;
+  if (chip->keypad[x] == 0 && chip->waiting != -1) {
+      chip->registers[x] = chip->waiting;
   }
-  else if (chip->keypad[1])
-  {
-    chip->registers[x] = 1;
+
+  for (uint8_t i = 0; i <= 0xF; i++) {
+    if (chip->keypad[i])
+    {
+      chip->waiting = i;
+      break;
+    }
   }
-  else if (chip->keypad[2])
-  {
-    chip->registers[x] = 2;
-  }
-  else if (chip->keypad[3])
-  {
-    chip->registers[x] = 3;
-  }
-  else if (chip->keypad[4])
-  {
-    chip->registers[x] = 4;
-  }
-  else if (chip->keypad[5])
-  {
-    chip->registers[x] = 5;
-  }
-  else if (chip->keypad[6])
-  {
-    chip->registers[x] = 6;
-  }
-  else if (chip->keypad[7])
-  {
-    chip->registers[x] = 7;
-  }
-  else if (chip->keypad[8])
-  {
-    chip->registers[x] = 8;
-  }
-  else if (chip->keypad[9])
-  {
-    chip->registers[x] = 9;
-  }
-  else if (chip->keypad[10])
-  {
-    chip->registers[x] = 10;
-  }
-  else if (chip->keypad[11])
-  {
-    chip->registers[x] = 11;
-  }
-  else if (chip->keypad[12])
-  {
-    chip->registers[x] = 12;
-  }
-  else if (chip->keypad[13])
-  {
-    chip->registers[x] = 13;
-  }
-  else if (chip->keypad[14])
-  {
-    chip->registers[x] = 14;
-  }
-  else if (chip->keypad[15])
-  {
-    chip->registers[x] = 15;
-  }
-  else
+  
+  // If waiting has not been set
+  if (chip->waiting == -1) 
   {
     chip->program_counter -= 2;
   }
@@ -348,8 +297,6 @@ static void op_Dxyn(Chip8* chip, uint16_t x, uint16_t y, uint16_t n) {
 }
 
 void cycle(Chip8* chip) {
-  // So we are going beyond them memory that the chip is capable of? We must
-  // be missing a jump or something
   uint16_t opcode = (chip->memory[chip->program_counter] << 8u) |
     chip->memory[chip->program_counter + 1];
   uint16_t op = opcode & 0xF000;
@@ -503,18 +450,16 @@ void cycle(Chip8* chip) {
       break;
   }
 
-  // Need to separate these out into their own function that works on a cycle.
-  // Decrement the delay timer if it's been set
+}
+
+void update_timers(Chip8* chip) {
   if (chip->delay_timer > 0)
   {
     --chip->delay_timer;
   }
 
-  // Decrement the sound timer if it's been set
   if (chip->sound_timer > 0)
   {
     --chip->sound_timer;
   }
-
 }
-

@@ -8,6 +8,7 @@
 #include "sokol_glue.h"
 #include "sokol_log.h"
 
+#include "sokol_audio.h"
 #include "sokol_framebuffer.h"
 
 #include <stdint.h>
@@ -41,7 +42,7 @@ static void init(void) {
       });
 }
 
-static void event(const sapp_event* e) {
+static void event(const sapp_event *e) {
   switch (e->type) {
     case SAPP_EVENTTYPE_KEY_DOWN:
       switch (e->key_code) {
@@ -155,33 +156,27 @@ static void event(const sapp_event* e) {
   }
 }
 
-static float accumulator = 0.0;
-static const float delta_time = 1.0 / 60.0;
-
-// More thought needs to be put into how many cycles per frame we are getting.,
-//
-// I would like to implement some of the improvements that are in 
-// Austin Morlan's article, then I would like to wrap this up. I think
-// I could get this working on my website? I would rather just put this into
-// a writeup and then point to it.
-#define CYCLES_PER_FRAME 60
+const double fixed_delta_time = 1.0 / 60.0;
+double ticks = 0.0;
+double previous_ticks = 0.0;
+const double hertz = 1.0 / 500.0;
 
 static void frame(void) {
+  ticks += sapp_frame_duration();
 
-  accumulator += sapp_frame_duration();
-
-  while (accumulator >= delta_time) {
-    accumulator -= delta_time;
-
-    for (int i = 0; i < CYCLES_PER_FRAME; i++) {
-      cycle(&chip);
-    }
+  if (ticks -  previous_ticks >= fixed_delta_time) {
+    update_timers(&chip);
+    previous_ticks = ticks;
   }
 
-  // update framebuffer with plasma pixels outside a sokol-gfx pass
+  double accumulator = sapp_frame_duration();
+  while (accumulator >= hertz) {
+    cycle(&chip);
+    accumulator -= hertz;
+  }
+
   sfb_update(state.fb, &(sfb_update_desc){.pixels = SG_RANGE(chip.pixels)});
 
-  // draw framebuffer in sokol-gfx render pass
   sg_begin_pass(&(sg_pass){
       .action = {.colors[0] = {.load_action = SG_LOADACTION_DONTCARE}},
       .swapchain = sglue_swapchain(),
@@ -201,11 +196,13 @@ static void cleanup(void) {
 
 sapp_desc sokol_main(int argc, char *argv[]) {
   if (argc != 2) {
-    printf("Try passing a filename and nothing else");
+    fprintf("Usage: %s <ROM>", argv[0]);
     exit(EXIT_FAILURE);
   }
 
-  load_rom(argv[1], &chip);
+  char const *rom_filename = argv[1];
+
+  load_rom(rom_filename, &chip);
 
   return (sapp_desc){
     .init_cb = init,

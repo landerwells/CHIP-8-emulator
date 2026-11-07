@@ -20,6 +20,7 @@ typedef struct {
   uint32_t pixels[FB_HEIGHT * FB_WIDTH];
   uint16_t index;
   bool keypad[16];
+  int8_t waiting;
 } Chip8;
 
 void load_rom(char const* filename, Chip8* chip);
@@ -27,3 +28,5 @@ void load_rom(char const* filename, Chip8* chip);
 void init_chip(Chip8* chip);
 
 void cycle(Chip8* chip);
+
+void update_timers(Chip8* chip);

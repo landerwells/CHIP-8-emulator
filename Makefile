@@ -7,7 +7,6 @@ LIBRARY=lib
 SRCS      := $(wildcard $(SOURCE)/*.c)
 OBJS      := $(SRCS:.c=.o)
 
-OPT=-O3
 DEPFLAGS=-MP -MD
 CFLAGS= -std=c99 -g -O3 \
 				-Wall -Wextra -Wpedantic \
@@ -22,10 +21,10 @@ $(BINARY): $(OBJS)
 	$(CC) $(LDFLAGS) $^ -o $@
 	dsymutil $@
 
-# -include $(OBJS:.o=.d)
-
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+-include $(OBJS:.o=.d)
 
 clean:
 	rm -rf $(BINARY) $(BINARY).dSYM $(OBJS) $(OBJS:.o=.d)
