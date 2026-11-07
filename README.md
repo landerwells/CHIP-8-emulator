@@ -1,3 +1,17 @@
-Does this get put into the output of gituwa?
+# CHIP-8 interpreter in C 
 
-There are a few things I need to fix up with the emulator, the first being timing.
+This is my implementation of hand-written C code for the CHIP-8 interpreter.
+
+## Usage
+
+Currently MacOS only.
+
+Ensure you have `make` installed. The binary only takes two command line
+arguments, the first is for the ROM file, and the second is for the desired
+hertz for the virtual machine to run at.
+
+``` sh
+make
+./chip ROM frequency
+```
+
