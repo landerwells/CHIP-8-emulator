@@ -18,7 +18,17 @@ make
 ```
 ## Images from Timendus' Test Suite
 
-[](assets/1-chip-8-logo.png)
+![](assets/1-chip-8-logo.png)
+
+![](assets/2-ibm-logo.png)
+
+![](assets/3-corax+.png)
+
+![](assets/4-flags.png)
+
+![](assets/5-quirks.png)
+
+![](assets/6-keypad.png)
 
 ## References
 
