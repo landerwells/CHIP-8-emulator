@@ -8,7 +8,6 @@
 #include "sokol_glue.h"
 #include "sokol_log.h"
 
-#include "sokol_audio.h"
 #include "sokol_framebuffer.h"
 
 #include <stdint.h>
@@ -196,7 +195,7 @@ static void cleanup(void) {
 
 sapp_desc sokol_main(int argc, char *argv[]) {
   if (argc != 2) {
-    fprintf("Usage: %s <ROM>", argv[0]);
+    printf("Usage: %s <ROM>", argv[0]);
     exit(EXIT_FAILURE);
   }
 
