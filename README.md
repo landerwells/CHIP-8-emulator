@@ -14,7 +14,7 @@ hertz for the virtual machine to run at.
 
 ``` sh
 make
-./chip ROM frequency
+./chip ROM
 ```
 ## Images from Timendus' Test Suite
 
