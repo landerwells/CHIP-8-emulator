@@ -2,6 +2,9 @@
 
 This is my implementation of hand-written C code for the CHIP-8 interpreter.
 
+I used [Sokol](https://github.com/floooh/sokol), a C header library for the
+window, and input detection.
+
 ## Usage
 
 Currently MacOS only.

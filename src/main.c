@@ -210,7 +210,7 @@ sapp_desc sokol_main(int argc, char *argv[]) {
     .event_cb = event,
     .width = 1000,
     .height = 400,
-    .window_title = "framebuffer-sapp.c",
+    .window_title = "CHIP-8",
     .icon.sokol_default = true,
     .logger.func = slog_func,
   };
