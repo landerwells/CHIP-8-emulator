@@ -8,7 +8,7 @@ SRCS      := $(wildcard $(SOURCE)/*.c)
 OBJS      := $(SRCS:.c=.o)
 
 DEPFLAGS=-MP -MD
-CFLAGS= -std=c99 -g -O3 \
+CFLAGS= -std=c99 -g -O1 \
 				-Wall -Wextra -Wpedantic \
 				-Wformat=2 -Wstrict-prototypes -Wmissing-prototypes \
 				-fsanitize=address,undefined -fno-omit-frame-pointer \
