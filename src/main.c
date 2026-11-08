@@ -22,20 +22,21 @@ static Chip8 chip;
 
 // I know this function is bad.
 static void stream(float* buffer, int num_frames, int num_channels) {
-  uint32_t even_odd = 0;
-  if (chip.sound_timer > 0) {
-    for (int i = 0; i < num_frames; i++) {
-      if (even_odd++ & (1<<5)) {
-        buffer[i] = 0.05f;
-      } else {
-        buffer[i] = -0.05f;
-      }
-    }
-  } else {
-    for (int i = 0; i < num_frames; i++) {
-      buffer[i] = 0.0f;
-    }
-  }
+  // Commenting this out because I don't like noise
+  /* uint32_t even_odd = 0; */
+  /* if (chip.sound_timer > 0) { */
+  /*   for (int i = 0; i < num_frames; i++) { */
+  /*     if (even_odd++ & (1<<5)) { */
+  /*       buffer[i] = 0.05f; */
+  /*     } else { */
+  /*       buffer[i] = -0.05f; */
+  /*     } */
+  /*   } */
+  /* } else { */
+  /*   for (int i = 0; i < num_frames; i++) { */
+  /*     buffer[i] = 0.0f; */
+  /*   } */
+  /* } */
 }
 
 static void init(void) {

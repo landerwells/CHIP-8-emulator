@@ -7,6 +7,46 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static void op_00E0(Chip8* chip);
+static void op_00EE(Chip8* chip);
+
+static void op_8xy0(Chip8* chip, uint16_t x, uint16_t y);
+static void op_8xy1(Chip8* chip, uint16_t x, uint16_t y);
+static void op_8xy2(Chip8* chip, uint16_t x, uint16_t y);
+static void op_8xy3(Chip8* chip, uint16_t x, uint16_t y);
+static void op_8xy4(Chip8* chip, uint16_t x, uint16_t y);
+static void op_8xy5(Chip8* chip, uint16_t x, uint16_t y);
+static void op_8xy6(Chip8* chip, uint16_t x, uint16_t y);
+static void op_8xy7(Chip8* chip, uint16_t x, uint16_t y);
+static void op_8xyE(Chip8* chip, uint16_t x, uint16_t y);
+
+static void op_ExA1(Chip8* chip, uint16_t x);
+static void op_Ex9E(Chip8* chip, uint16_t x);
+
+static void op_Fx07(Chip8* chip, uint16_t x);
+static void op_Fx0A(Chip8* chip, uint16_t x);
+static void op_Fx15(Chip8* chip, uint16_t x);
+static void op_Fx18(Chip8* chip, uint16_t x);
+static void op_Fx1E(Chip8* chip, uint16_t x);
+static void op_Fx29(Chip8* chip, uint16_t x);
+static void op_Fx33(Chip8* chip, uint16_t x);
+static void op_Fx55(Chip8* chip, uint16_t x);
+static void op_Fx65(Chip8* chip, uint16_t x);
+
+static uint16_t opcode = 0;
+static uint16_t op = 0;
+static uint16_t x = 0;
+static uint16_t y = 0;
+static uint16_t n = 0;
+static uint16_t kk = 0;
+static uint16_t nnn = 0;
+
+void (*table[0xF + 1]) ();
+void (*table0[0xE + 1]) (Chip8*);
+void (*tableE[0xE + 1]) (Chip8*, uint16_t);
+void (*table8[0xE + 1]) (Chip8*, uint16_t, uint16_t);
+void (*tableF[0x65 + 1]) (Chip8*, uint16_t);
+
 void load_rom(const char* filename, Chip8* chip) {
   FILE *file = fopen(filename, "rb");
   if (file == NULL) {
@@ -23,7 +63,6 @@ void load_rom(const char* filename, Chip8* chip) {
 
   fclose(file);
 }
-
 void init_chip(Chip8* chip) {
   chip->program_counter = START_LOC;
   chip->waiting = -1;
@@ -52,6 +91,31 @@ void init_chip(Chip8* chip) {
     chip->memory[FONTSET_START_ADDRESS + i] = fontset[i];
   }
 
+  table8[0x0] = &op_8xy0;
+  table8[0x1] = &op_8xy1;
+  table8[0x2] = &op_8xy2;
+  table8[0x3] = &op_8xy3;
+  table8[0x4] = &op_8xy4;
+  table8[0x5] = &op_8xy5;
+  table8[0x6] = &op_8xy6;
+  table8[0x7] = &op_8xy7;
+  table8[0xE] = &op_8xyE;
+
+  table0[0x0] = &op_00E0;
+  table0[0xE] = &op_00EE;
+
+  tableE[0x1] = &op_ExA1;
+  tableE[0xE] = &op_Ex9E;
+
+  tableF[0x07] = &op_Fx07;
+  tableF[0x0A] = &op_Fx0A;
+  tableF[0x15] = &op_Fx15;
+  tableF[0x18] = &op_Fx18;
+  tableF[0x1E] = &op_Fx1E;
+  tableF[0x29] = &op_Fx29;
+  tableF[0x33] = &op_Fx33;
+  tableF[0x55] = &op_Fx55;
+  tableF[0x65] = &op_Fx65;
 }
 
 static void op_ExA1(Chip8* chip, uint16_t x) {
@@ -75,7 +139,7 @@ static void op_Fx07(Chip8* chip, uint16_t x) {
 
 static void op_Fx0A(Chip8* chip, uint16_t x) {
   if (chip->keypad[x] == 0 && chip->waiting != -1) {
-      chip->registers[x] = chip->waiting;
+    chip->registers[x] = chip->waiting;
   }
 
   for (uint8_t i = 0; i <= 0xF; i++) {
@@ -85,7 +149,7 @@ static void op_Fx0A(Chip8* chip, uint16_t x) {
       break;
     }
   }
-  
+
   if (chip->waiting == -1) 
   {
     chip->program_counter -= 2;
@@ -93,7 +157,6 @@ static void op_Fx0A(Chip8* chip, uint16_t x) {
 }
 
 static void op_Fx15(Chip8* chip, uint16_t x) {
-  printf("Fx15\n");
   chip->sound_timer = chip->registers[x];
 }
 
@@ -255,11 +318,6 @@ static void op_Bnnn(Chip8* chip, uint16_t nnn) {
   chip->program_counter = nnn + chip->registers[0];
 }
 
-// Quirk
-/* static void op_Bxkk(Chip8* chip, uint16_t x, uint16_t nnn) { */
-/*   chip->program_counter += nnn + chip->registers[x]; */
-/* } */
-
 static void op_Cxkk(Chip8* chip, uint16_t x, uint16_t kk) {
   chip->registers[x] = rand() & kk;
 }
@@ -291,112 +349,36 @@ static void op_Dxyn(Chip8* chip, uint16_t x, uint16_t y, uint16_t n) {
   }
 }
 
+// https://multigesture.net/wp-content/uploads/mirror/zenogais/FunctionPointers.htm
+static void op_NULL() {
+  printf("Unknown opcode: %X", opcode);
+  exit(EXIT_FAILURE);
+};
+
 void cycle(Chip8* chip) {
-  uint16_t opcode = (chip->memory[chip->program_counter] << 8u) |
+  opcode = (chip->memory[chip->program_counter] << 8u) |
     chip->memory[chip->program_counter + 1];
-  uint16_t op = opcode & 0xF000;
-  uint16_t x = (opcode & 0x0F00) >> 8;
-  uint16_t y = (opcode & 0x00F0) >> 4;
-  uint16_t n = opcode & 0x000F;
-  uint16_t kk = opcode & 0x00FF;
-  uint16_t nnn = opcode & 0x0FFF;
+  op = opcode & 0xF000;
+  x = (opcode & 0x0F00) >> 8;
+  y = (opcode & 0x00F0) >> 4;
+  n = opcode & 0x000F;
+  kk = opcode & 0x00FF;
+  nnn = opcode & 0x0FFF;
 
   chip->program_counter += 2;
 
   switch (op) {
     case 0x8000:
-      switch (n) {
-        case 0x0:
-          op_8xy0(chip, x, y);
-          break;
-        case 0x1:
-          op_8xy1(chip, x, y);
-          break;
-        case 0x2:
-          op_8xy2(chip, x, y);
-          break;
-        case 0x3:
-          op_8xy3(chip, x, y);
-          break;
-        case 0x4:
-          op_8xy4(chip, x, y);
-          break;
-        case 0x5:
-          op_8xy5(chip, x, y);
-          break;
-        case 0x6:
-          op_8xy6(chip, x, y);
-          break;
-        case 0x7:
-          op_8xy7(chip, x, y);
-          break;
-        case 0xE:
-          op_8xyE(chip, x, y);
-          break;
-        default:
-          printf("Unknown opcode: %X", opcode);
-          exit(EXIT_FAILURE);
-          break;
-      }
+      table8[n](chip, x, y);
       break;
     case 0x0000:
-      switch (n) {
-        case 0x0:
-          op_00E0(chip);
-          break;
-        case 0xE:
-          op_00EE(chip);
-          break;
-      }
+      table0[n](chip);
       break;
     case 0xE000:
-      switch (kk) {
-        case 0xA1:
-          op_ExA1(chip, x);
-          break;
-        case 0x9E:
-          op_Ex9E(chip, x);
-          break;
-        default:
-          printf("Unknown opcode: %X", opcode);
-          exit(EXIT_FAILURE);
-          break;
-      }
+      tableE[n](chip, x);
       break;
     case 0xF000:
-      switch (kk) {
-        case 0x07:
-          op_Fx07(chip, x);
-          break;
-        case 0x0A:
-          op_Fx0A(chip, x);
-          break;
-        case 0x15:
-          op_Fx15(chip, x);
-          break;
-        case 0x18:
-          op_Fx18(chip, x);
-          break;
-        case 0x1E:
-          op_Fx1E(chip, x);
-          break;
-        case 0x29:
-          op_Fx29(chip, x);
-          break;
-        case 0x33:
-          op_Fx33(chip, x);
-          break;
-        case 0x55:
-          op_Fx55(chip, x);
-          break;
-        case 0x65:
-          op_Fx65(chip, x);
-          break;
-        default:
-          printf("Unknown opcode: %X", opcode);
-          exit(EXIT_FAILURE);
-          break;
-      }
+      tableF[kk](chip, x);
       break;
     default:
       switch (op) {
@@ -429,7 +411,6 @@ void cycle(Chip8* chip) {
           break;
         case 0xB000:
           op_Bnnn(chip, nnn);
-          /* op_Bxkk(chip, x, kk); */
           break;
         case 0xC000:
           op_Cxkk(chip, x, kk);
