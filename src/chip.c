@@ -63,6 +63,11 @@ void (*tableE[0xE + 1]) (Chip8*);
 void (*table8[0xE + 1]) (Chip8*);
 void (*tableF[0x65 + 1]) (Chip8*);
 
+static void op_table0(Chip8*);
+static void op_table8(Chip8*);
+static void op_tableE(Chip8*);
+static void op_tableF(Chip8*);
+
 void load_rom(const char* filename, Chip8* chip) {
   FILE *file = fopen(filename, "rb");
   if (file == NULL) {
@@ -107,7 +112,7 @@ void init_chip(Chip8* chip) {
     chip->memory[FONTSET_START_ADDRESS + i] = fontset[i];
   }
 
-  table[0x0] = &table0;
+  table[0x0] = &op_table0;
   table[0x1] = &op_1nnn;
   table[0x2] = &op_2nnn;
   table[0x3] = &op_3xkk;
@@ -115,14 +120,14 @@ void init_chip(Chip8* chip) {
   table[0x5] = &op_5xy0;
   table[0x6] = &op_6xkk;
   table[0x7] = &op_7xkk;
-  table[0x8] = &table8;
+  table[0x8] = &op_table8;
   table[0x9] = &op_9xy0;
   table[0xA] = &op_Annn;
   table[0xB] = &op_Bnnn;
   table[0xC] = &op_Cxkk;
   table[0xD] = &op_Dxyn;
-  table[0xE] = &tableE;
-  table[0xF] = &tableF;
+  table[0xE] = &op_tableE;
+  table[0xF] = &op_tableF;
 
   for (size_t i = 0; i < 0xE + 1; i++) {
     table0[i] = &op_NULL;
@@ -167,6 +172,22 @@ static void op_ExA1(Chip8* chip) {
     chip->program_counter += 2;
   }
 
+}
+
+static void op_table0(Chip8* chip) {
+  table0[n](chip);
+}
+
+static void op_table8(Chip8* chip) {
+  table8[n](chip);
+}
+
+static void op_tableE(Chip8* chip) {
+  tableE[n](chip);
+}
+
+static void op_tableF(Chip8* chip) {
+  tableF[kk](chip);
 }
 
 static void op_Ex9E(Chip8* chip) {
@@ -403,24 +424,7 @@ void cycle(Chip8* chip) {
 
   chip->program_counter += 2;
 
-  // Alright, now I need to determine how to call another function from the one before?
-  switch (op) {
-    case 0x8000:
-      table8[n](chip);
-      break;
-    case 0x0000:
-      table0[n](chip);
-      break; 
-    case 0xE000:
-      tableE[n](chip);
-      break;
-    case 0xF000:
-      tableF[kk](chip);
-      break;
-    default:
-      table[op >> 12](chip);
-      break;
-  }
+  table[op >> 12](chip);
 }
 
 void update_timers(Chip8* chip) {
