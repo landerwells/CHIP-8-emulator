@@ -1,3 +1,6 @@
+#ifndef CHIP_H
+#define CHIP_H
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -30,3 +33,5 @@ void init_chip(Chip8* chip);
 void cycle(Chip8* chip);
 
 void update_timers(Chip8* chip);
+
+#endif 
